@@ -62,9 +62,6 @@
     "disabled": false,
     "info": ""
   },
-
-  /* ---------- CONFIG NODES (DASHBOARD, SERIAL, ETC.) ---------- */
-
   {
     "id": "ui_tab_main",
     "type": "ui_tab",
@@ -150,8 +147,6 @@
     "responsetimeout": "10000"
   },
 
-  /* ---------- 00_CORE_SYSTEM ---------- */
-
   {
     "id": "inject_core_start",
     "type": "inject",
@@ -213,8 +208,6 @@
     "y": 80,
     "wires": []
   },
-
-  /* ---------- 01_LOGGER_HISTORY ---------- */
 
   {
     "id": "linkin_logger_from_modules",
@@ -281,8 +274,6 @@
     "y": 120,
     "wires": []
   },
-
-  /* ---------- 02_DASHBOARD_UI ---------- */
 
   {
     "id": "inject_ui_status",
@@ -409,8 +400,6 @@
     ]
   },
 
-  /* ---------- 10_RS485_IPMS (ESQUELETO) ---------- */
-
   {
     "id": "serialin_ipms",
     "type": "serial in",
@@ -458,7 +447,6 @@
     "wires": []
   },
 
-  /* ---------- 11_RS485_OSDP (ESQUELETO) ---------- */
 
   {
     "id": "serialin_osdp",
@@ -507,7 +495,6 @@
     "wires": []
   },
 
-  /* ---------- 99_HARDWARE_IO (LEDs / BUZZER ESQUELETO) ---------- */
 
   {
     "id": "linkin_hw_from_logger",
