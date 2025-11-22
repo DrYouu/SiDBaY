@@ -51,7 +51,7 @@
   {
     "id": "tab_auth_yubikey",
     "type": "tab",
-    "label": "40_AUTH_OMNIKEY_YUBIKEY",
+    "label": "40_AUTH_OMNIK​EY_YUBIKEY",
     "disabled": false,
     "info": ""
   },
@@ -62,6 +62,7 @@
     "disabled": false,
     "info": ""
   },
+
   {
     "id": "ui_tab_main",
     "type": "ui_tab",
@@ -181,7 +182,7 @@
     "type": "function",
     "z": "tab_core_system",
     "name": "Init SiDBaY config",
-    "func": "let cfg = global.get(\"sidbay_config\");\n\nif (!cfg) {\n    cfg = {\n        system: {\n            node_id: \"SiDBaY-001\",\n            timezone: \"Europe/Madrid\",\n            sd_mount: \"/mnt/sidbay-logs\",\n            log_retention_days: 30,\n            max_log_size_mb: 20\n        },\n        logging: {\n            events_path: \"/mnt/sidbay-logs/events-YYYYMMDD.log\",\n            system_path: \"/mnt/sidbay-logs/system-YYYYMMDD.log\",\n            pcap_path: \"/mnt/sidbay-logs/pcap\",\n            level: \"info\"\n        },\n        modules: {\n            ipms: { enabled: true, rs485_bus: \"bus1\", mode: \"emulator\" },\n            osdp: { enabled: true, rs485_bus: \"bus2\" },\n            eth_capture: { enabled: true, iface: \"eth0\", filter: \"\" },\n            relay: { enabled: true },\n            auth_yubikey: { enabled: true, required_for_critical_actions: false }\n        }\n    };\n}\n\nglobal.set(\"sidbay_config\", cfg);\n\nmsg.event = {\n    id: \"SYSTEM_START_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"system\",\n    source: { iface: \"internal\", direction: \"internal\", addr: \"-\" },\n    type: \"status\",\n    severity: \"info\",\n    code: \"SYSTEM_START\",\n    text: \"SiDBaY iniciado y configuración cargada\",\n    data: { node_id: cfg.system.node_id }\n};\n\nreturn msg;",
+    "func": "let cfg = global.get(\"sidbay_config\");\n\nif (!cfg) {\n    cfg = {\n        system: {\n            node_id: \"SiDBaY-001\",\n            timezone: \"Europe/Madrid\",\n            sd_mount: \"/mnt/sidbay-logs\",\n            log_retention_days: 30,\n            max_log_size_mb: 20\n        },\n        hardware: {\n            rs485: {\n                bus1: { device: \"/dev/ttyAMA1\", role: \"ipms\" },\n                bus2: { device: \"/dev/ttyAMA2\", role: \"osdp\" }\n            },\n            leds: { user0: 20, user1: 26 },\n            buzzer_gpio: 22,\n            rtc_enabled: true,\n            crypto_enabled: true\n        },\n        logging: {\n            events_path: \"/mnt/sidbay-logs/events-YYYYMMDD.log\",\n            system_path: \"/mnt/sidbay-logs/system-YYYYMMDD.log\",\n            pcap_path: \"/mnt/sidbay-logs/pcap\",\n            level: \"info\"\n        },\n        modules: {\n            ipms: { enabled: true, rs485_bus: \"bus1\", mode: \"emulator\" },\n            osdp: { enabled: true, rs485_bus: \"bus2\" },\n            eth_capture: { enabled: true, iface: \"eth0\", filter: \"tcp port 8888 or udp port 49204\", pcap_record: false },\n            relay: { enabled: true },\n            auth_yubikey: { enabled: true, required_for_critical_actions: false }\n        }\n    };\n}\n\nglobal.set(\"sidbay_config\", cfg);\n\nmsg.event = {\n    id: \"SYSTEM_START_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"system\",\n    source: { iface: \"internal\", direction: \"internal\", addr: \"-\" },\n    type: \"status\",\n    severity: \"info\",\n    code: \"SYSTEM_START\",\n    text: \"SiDBaY iniciado y configuración cargada\",\n    data: { node_id: cfg.system.node_id }\n};\n\nreturn msg;",
     "outputs": 1,
     "noerr": 0,
     "initialize": "",
@@ -214,7 +215,11 @@
     "type": "link in",
     "z": "tab_logger_history",
     "name": "from_modules_to_logger",
-    "links": [],
+    "links": [
+      "linkout_core_to_logger",
+      "linkout_ipms_to_logger",
+      "linkout_osdp_to_logger"
+    ],
     "x": 160,
     "y": 80,
     "wires": [
@@ -227,8 +232,8 @@
     "id": "fn_logger_format",
     "type": "function",
     "z": "tab_logger_history",
-    "name": "Normaliza y guarda en contexto",
-    "func": "let ev = msg.event || {};\n\n// Normalizar campos mínimos\nif (!ev.ts) ev.ts = new Date().toISOString();\nif (!ev.id) ev.id = \"EV_\" + Date.now();\nif (!ev.module) ev.module = \"unknown\";\nif (!ev.severity) ev.severity = \"info\";\n\nmsg.event = ev;\n\n// Guardar en lista de eventos recientes en global\nlet recent = global.get(\"sidbay_recent_events\") || [];\nrecent.push(ev);\nif (recent.length > 100) {\n    recent = recent.slice(recent.length - 100);\n}\nglobal.set(\"sidbay_recent_events\", recent);\n\n// Decidir fichero según tipo\nlet cfg = global.get(\"sidbay_config\") || {};\nlet logging = cfg.logging || {};\nlet basePath;\n\nif (ev.module === \"system\" || ev.type === \"config\") {\n    basePath = logging.system_path || \"/mnt/sidbay-logs/system-YYYYMMDD.log\";\n} else {\n    basePath = logging.events_path || \"/mnt/sidbay-logs/events-YYYYMMDD.log\";\n}\n\n// Reemplazar YYYYMMDD por fecha actual\nlet d = new Date();\nlet y = d.getFullYear();\nlet m = (\"0\" + (d.getMonth()+1)).slice(-2);\nlet day = (\"0\" + d.getDate()).slice(-2);\nlet dateStr = \"\" + y + m + day;\n\nlet filename = basePath.replace(\"YYYYMMDD\", dateStr);\nmsg.filename = filename;\n\n// Línea JSON\nmsg.payload = JSON.stringify(ev) + \"\\n\";\n\n// Salida 1: a fichero\n// Salida 2: a hardware (para LEDs/buzzer) con el evento tal cual\nlet msgFile = { payload: msg.payload, filename: msg.filename };\nlet msgHW = { event: ev };\n\nreturn [ msgFile, msgHW ];",
+    "name": "Normaliza y distribuye",
+    "func": "let ev = msg.event || {};\n\nif (!ev.ts) ev.ts = new Date().toISOString();\nif (!ev.id) ev.id = \"EV_\" + Date.now();\nif (!ev.module) ev.module = \"unknown\";\nif (!ev.severity) ev.severity = \"info\";\n\nmsg.event = ev;\n\nlet recent = global.get(\"sidbay_recent_events\") || [];\nrecent.push(ev);\nif (recent.length > 100) {\n    recent = recent.slice(recent.length - 100);\n}\nglobal.set(\"sidbay_recent_events\", recent);\n\nlet cfg = global.get(\"sidbay_config\") || {};\nlet logging = cfg.logging || {};\nlet basePath;\n\nif (ev.module === \"system\" || ev.type === \"config\") {\n    basePath = logging.system_path || \"/mnt/sidbay-logs/system-YYYYMMDD.log\";\n} else {\n    basePath = logging.events_path || \"/mnt/sidbay-logs/events-YYYYMMDD.log\";\n}\n\nlet d = new Date();\nlet y = d.getFullYear();\nlet m = (\"0\" + (d.getMonth()+1)).slice(-2);\nlet day = (\"0\" + d.getDate()).slice(-2);\nlet dateStr = \"\" + y + m + day;\n\nlet filename = basePath.replace(\"YYYYMMDD\", dateStr);\nmsg.filename = filename;\n\nmsg.payload = JSON.stringify(ev) + \"\\n\";\n\nlet msgFile = { payload: msg.payload, filename: msg.filename };\nlet msgHW = { event: ev };\n\nreturn [ msgFile, msgHW ];",
     "outputs": 2,
     "noerr": 0,
     "initialize": "",
@@ -388,7 +393,7 @@
     "order": 1,
     "width": 12,
     "height": 8,
-    "format": "<div ng-bind-html=\"msg.payload | trusted\"></div>",
+    "format": "<div ng-bind-html=\"msg.payload\"></div>",
     "storeOutMessages": true,
     "fwdInMessages": true,
     "resendOnRefresh": true,
@@ -419,7 +424,7 @@
     "type": "function",
     "z": "tab_rs485_ipms",
     "name": "Stub parser IPMS",
-    "func": "let payload = msg.payload; // buffer o string según config\n\nlet ev = {\n    id: \"IPMS_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"ipms\",\n    source: { iface: \"rs485-1\", direction: \"in\", addr: \"?\" },\n    type: \"frame\",\n    severity: \"info\",\n    code: \"IPMS_FRAME\",\n    text: \"Trama IPMS recibida (stub)\",\n    data: { raw: payload }\n};\n\nmsg.event = ev;\nreturn msg;",
+    "func": "let payload = msg.payload;\n\nlet ev = {\n    id: \"IPMS_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"ipms\",\n    source: { iface: \"rs485-1\", direction: \"in\", addr: \"?\" },\n    type: \"frame\",\n    severity: \"info\",\n    code: \"IPMS_FRAME\",\n    text: \"Trama IPMS recibida (stub)\",\n    data: { raw: payload }\n};\n\nmsg.event = ev;\nreturn msg;",
     "outputs": 1,
     "noerr": 0,
     "initialize": "",
@@ -446,7 +451,6 @@
     "y": 80,
     "wires": []
   },
-
 
   {
     "id": "serialin_osdp",
@@ -495,13 +499,14 @@
     "wires": []
   },
 
-
   {
     "id": "linkin_hw_from_logger",
     "type": "link in",
     "z": "tab_hw_io",
     "name": "from_logger_to_hw",
-    "links": [],
+    "links": [
+      "linkout_logger_to_hw"
+    ],
     "x": 150,
     "y": 80,
     "wires": [
@@ -515,7 +520,7 @@
     "type": "function",
     "z": "tab_hw_io",
     "name": "Decide USER0 según severidad",
-    "func": "let ev = msg.event || {};\nlet sev = ev.severity || \"info\";\n\n// Por ahora: encender USER0 si hay error o crítico en el último evento\nlet on = (sev === \"error\" || sev === \"crit\");\nmsg.payload = on ? 1 : 0;\nreturn msg;",
+    "func": "let ev = msg.event || {};\nlet sev = ev.severity || \"info\";\n\nlet on = (sev === \"error\" || sev === \"crit\");\nmsg.payload = on ? 1 : 0;\nreturn msg;",
     "outputs": 1,
     "noerr": 0,
     "initialize": "",
