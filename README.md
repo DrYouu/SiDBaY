@@ -32,16 +32,31 @@ Todo el diseño es **cerrado, privado y específico** para este proyecto. La API
   - No se queda instalado de forma permanente en el barco.
   - Se utiliza por personal técnico, en modo diagnóstico, pruebas o auditoría.
 
-## Estado actual
+## Estado actual (2025-11-22)
 
-> Se irá marcando según avance el proyecto.
+A nivel de diseño y documentación:
 
-- [ ] Definición cerrada del hardware (placa, Pi, conexiones).
-- [ ] Primer flujo de Node-RED con dashboard básico.
-- [ ] Passthru estable RS-485 (controladora ↔ lector) con capacidad de log.
-- [ ] Captura de trazas reales IPMS y documentación de protocolo.
-- [ ] Prueba básica de Omnikey + YubiKey vía PC/SC.
-- [ ] Definición de escenarios de prueba estándar (casos de diagnóstico).
+- [x] Definido el rol del Emulador IPMS como **equipo de diagnóstico** específico para sistemas IPMS en barcos.
+- [x] Establecida la estructura base del repositorio (código, tests, docs, configuración de editor).
+- [x] Redactada la documentación inicial:
+  - Arquitectura del sistema.
+  - Flujos de pruebas y escenarios de diagnóstico.
+  - Decisiones técnicas iniciales.
+  - Esquema de hardware y topologías de uso.
+  - Plan de logs y dashboard.
+  - Backlog técnico.
+- [x] Propuesta de configuración para Codex / GPT en VS Code:
+  - Reglas globales de estilo y organización.
+  - Reglas específicas para este repositorio.
+  - Configuración de sandbox y modelo.
+
+A nivel de implementación:
+
+- [ ] Módulo RS-485 en Raspberry Pi (passthru, sniffer, emulación).
+- [ ] Flujos Node-RED mínimos (estado + eventos).
+- [ ] Integración PC/SC con Omnikey + YubiKey en la Raspberry Pi.
+- [ ] Uso real de LEDs y buzzer según tabla de estados.
+- [ ] Procedimiento de despliegue y actualización del equipo de diagnóstico.
 
 ## Arquitectura (resumen)
 

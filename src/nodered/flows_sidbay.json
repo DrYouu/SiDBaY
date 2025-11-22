@@ -1,551 +1,1127 @@
 [
-  {
-    "id": "tab_core_system",
-    "type": "tab",
-    "label": "00_CORE_SYSTEM",
-    "disabled": false,
-    "info": ""
-  },
-  {
-    "id": "tab_logger_history",
-    "type": "tab",
-    "label": "01_LOGGER_HISTORY",
-    "disabled": false,
-    "info": ""
-  },
-  {
-    "id": "tab_dashboard_ui",
-    "type": "tab",
-    "label": "02_DASHBOARD_UI",
-    "disabled": false,
-    "info": ""
-  },
-  {
-    "id": "tab_rs485_ipms",
-    "type": "tab",
-    "label": "10_RS485_IPMS",
-    "disabled": false,
-    "info": ""
-  },
-  {
-    "id": "tab_rs485_osdp",
-    "type": "tab",
-    "label": "11_RS485_OSDP",
-    "disabled": false,
-    "info": ""
-  },
-  {
-    "id": "tab_eth_capture",
-    "type": "tab",
-    "label": "20_ETH_CAPTURE",
-    "disabled": false,
-    "info": ""
-  },
-  {
-    "id": "tab_relay_routing",
-    "type": "tab",
-    "label": "30_RELAY_ROUTING",
-    "disabled": false,
-    "info": ""
-  },
-  {
-    "id": "tab_auth_yubikey",
-    "type": "tab",
-    "label": "40_AUTH_OMNIK​EY_YUBIKEY",
-    "disabled": false,
-    "info": ""
-  },
-  {
-    "id": "tab_hw_io",
-    "type": "tab",
-    "label": "99_HARDWARE_IO",
-    "disabled": false,
-    "info": ""
-  },
-
-  {
-    "id": "ui_tab_main",
-    "type": "ui_tab",
-    "z": "",
-    "name": "SiDBaY",
-    "icon": "dashboard",
-    "order": 1,
-    "disabled": false,
-    "hidden": false
-  },
-  {
-    "id": "ui_group_status",
-    "type": "ui_group",
-    "z": "",
-    "name": "Estado",
-    "tab": "ui_tab_main",
-    "order": 1,
-    "disp": true,
-    "width": "12",
-    "collapse": false
-  },
-  {
-    "id": "ui_group_events",
-    "type": "ui_group",
-    "z": "",
-    "name": "Eventos",
-    "tab": "ui_tab_main",
-    "order": 2,
-    "disp": true,
-    "width": "12",
-    "collapse": false
-  },
-  {
-    "id": "ui_group_config",
-    "type": "ui_group",
-    "z": "",
-    "name": "Config general",
-    "tab": "ui_tab_main",
-    "order": 3,
-    "disp": true,
-    "width": "12",
-    "collapse": false
-  },
-
-  {
-    "id": "serial_cm4_bus1",
-    "type": "serial-port",
-    "z": "",
-    "serialport": "/dev/ttyAMA1",
-    "serialbaud": "9600",
-    "databits": "8",
-    "parity": "none",
-    "stopbits": "1",
-    "waitfor": "",
-    "dtr": "none",
-    "rts": "none",
-    "cts": "none",
-    "dsr": "none",
-    "newline": "",
-    "bin": "bin",
-    "out": "time",
-    "addchar": "",
-    "responsetimeout": "10000"
-  },
-  {
-    "id": "serial_cm4_bus2",
-    "type": "serial-port",
-    "z": "",
-    "serialport": "/dev/ttyAMA2",
-    "serialbaud": "9600",
-    "databits": "8",
-    "parity": "none",
-    "stopbits": "1",
-    "waitfor": "",
-    "dtr": "none",
-    "rts": "none",
-    "cts": "none",
-    "dsr": "none",
-    "newline": "",
-    "bin": "bin",
-    "out": "time",
-    "addchar": "",
-    "responsetimeout": "10000"
-  },
-
-  {
-    "id": "inject_core_start",
-    "type": "inject",
-    "z": "tab_core_system",
-    "name": "On start",
-    "props": [
-      {
-        "p": "payload"
-      },
-      {
-        "p": "topic",
-        "vt": "str"
-      }
-    ],
-    "repeat": "",
-    "crontab": "",
-    "once": true,
-    "onceDelay": 0.5,
-    "topic": "",
-    "payload": "",
-    "payloadType": "date",
-    "x": 140,
-    "y": 80,
-    "wires": [
-      [
-        "fn_core_init"
-      ]
-    ]
-  },
-  {
-    "id": "fn_core_init",
-    "type": "function",
-    "z": "tab_core_system",
-    "name": "Init SiDBaY config",
-    "func": "let cfg = global.get(\"sidbay_config\");\n\nif (!cfg) {\n    cfg = {\n        system: {\n            node_id: \"SiDBaY-001\",\n            timezone: \"Europe/Madrid\",\n            sd_mount: \"/mnt/sidbay-logs\",\n            log_retention_days: 30,\n            max_log_size_mb: 20\n        },\n        hardware: {\n            rs485: {\n                bus1: { device: \"/dev/ttyAMA1\", role: \"ipms\" },\n                bus2: { device: \"/dev/ttyAMA2\", role: \"osdp\" }\n            },\n            leds: { user0: 20, user1: 26 },\n            buzzer_gpio: 22,\n            rtc_enabled: true,\n            crypto_enabled: true\n        },\n        logging: {\n            events_path: \"/mnt/sidbay-logs/events-YYYYMMDD.log\",\n            system_path: \"/mnt/sidbay-logs/system-YYYYMMDD.log\",\n            pcap_path: \"/mnt/sidbay-logs/pcap\",\n            level: \"info\"\n        },\n        modules: {\n            ipms: { enabled: true, rs485_bus: \"bus1\", mode: \"emulator\" },\n            osdp: { enabled: true, rs485_bus: \"bus2\" },\n            eth_capture: { enabled: true, iface: \"eth0\", filter: \"tcp port 8888 or udp port 49204\", pcap_record: false },\n            relay: { enabled: true },\n            auth_yubikey: { enabled: true, required_for_critical_actions: false }\n        }\n    };\n}\n\nglobal.set(\"sidbay_config\", cfg);\n\nmsg.event = {\n    id: \"SYSTEM_START_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"system\",\n    source: { iface: \"internal\", direction: \"internal\", addr: \"-\" },\n    type: \"status\",\n    severity: \"info\",\n    code: \"SYSTEM_START\",\n    text: \"SiDBaY iniciado y configuración cargada\",\n    data: { node_id: cfg.system.node_id }\n};\n\nreturn msg;",
-    "outputs": 1,
-    "noerr": 0,
-    "initialize": "",
-    "finalize": "",
-    "libs": [],
-    "x": 360,
-    "y": 80,
-    "wires": [
-      [
-        "linkout_core_to_logger"
-      ]
-    ]
-  },
-  {
-    "id": "linkout_core_to_logger",
-    "type": "link out",
-    "z": "tab_core_system",
-    "name": "to_logger",
-    "mode": "link",
-    "links": [
-      "linkin_logger_from_modules"
-    ],
-    "x": 630,
-    "y": 80,
-    "wires": []
-  },
-
-  {
-    "id": "linkin_logger_from_modules",
-    "type": "link in",
-    "z": "tab_logger_history",
-    "name": "from_modules_to_logger",
-    "links": [
-      "linkout_core_to_logger",
-      "linkout_ipms_to_logger",
-      "linkout_osdp_to_logger"
-    ],
-    "x": 160,
-    "y": 80,
-    "wires": [
-      [
-        "fn_logger_format"
-      ]
-    ]
-  },
-  {
-    "id": "fn_logger_format",
-    "type": "function",
-    "z": "tab_logger_history",
-    "name": "Normaliza y distribuye",
-    "func": "let ev = msg.event || {};\n\nif (!ev.ts) ev.ts = new Date().toISOString();\nif (!ev.id) ev.id = \"EV_\" + Date.now();\nif (!ev.module) ev.module = \"unknown\";\nif (!ev.severity) ev.severity = \"info\";\n\nmsg.event = ev;\n\nlet recent = global.get(\"sidbay_recent_events\") || [];\nrecent.push(ev);\nif (recent.length > 100) {\n    recent = recent.slice(recent.length - 100);\n}\nglobal.set(\"sidbay_recent_events\", recent);\n\nlet cfg = global.get(\"sidbay_config\") || {};\nlet logging = cfg.logging || {};\nlet basePath;\n\nif (ev.module === \"system\" || ev.type === \"config\") {\n    basePath = logging.system_path || \"/mnt/sidbay-logs/system-YYYYMMDD.log\";\n} else {\n    basePath = logging.events_path || \"/mnt/sidbay-logs/events-YYYYMMDD.log\";\n}\n\nlet d = new Date();\nlet y = d.getFullYear();\nlet m = (\"0\" + (d.getMonth()+1)).slice(-2);\nlet day = (\"0\" + d.getDate()).slice(-2);\nlet dateStr = \"\" + y + m + day;\n\nlet filename = basePath.replace(\"YYYYMMDD\", dateStr);\nmsg.filename = filename;\n\nmsg.payload = JSON.stringify(ev) + \"\\n\";\n\nlet msgFile = { payload: msg.payload, filename: msg.filename };\nlet msgHW = { event: ev };\n\nreturn [ msgFile, msgHW ];",
-    "outputs": 2,
-    "noerr": 0,
-    "initialize": "",
-    "finalize": "",
-    "libs": [],
-    "x": 430,
-    "y": 80,
-    "wires": [
-      [
-        "file_logger_out"
-      ],
-      [
-        "linkout_logger_to_hw"
-      ]
-    ]
-  },
-  {
-    "id": "file_logger_out",
-    "type": "file",
-    "z": "tab_logger_history",
-    "name": "Append log a SD",
-    "filename": "",
-    "appendNewline": false,
-    "createDir": true,
-    "overwriteFile": "false",
-    "encoding": "utf8",
-    "x": 730,
-    "y": 60,
-    "wires": [
-      []
-    ]
-  },
-  {
-    "id": "linkout_logger_to_hw",
-    "type": "link out",
-    "z": "tab_logger_history",
-    "name": "to_hardware_status",
-    "mode": "link",
-    "links": [
-      "linkin_hw_from_logger"
-    ],
-    "x": 730,
-    "y": 120,
-    "wires": []
-  },
-
-  {
-    "id": "inject_ui_status",
-    "type": "inject",
-    "z": "tab_dashboard_ui",
-    "name": "Refresca estado",
-    "props": [
-      {
-        "p": "payload"
-      }
-    ],
-    "repeat": "5",
-    "crontab": "",
-    "once": true,
-    "onceDelay": 1,
-    "topic": "",
-    "payload": "",
-    "payloadType": "date",
-    "x": 150,
-    "y": 80,
-    "wires": [
-      [
-        "fn_ui_status"
-      ]
-    ]
-  },
-  {
-    "id": "fn_ui_status",
-    "type": "function",
-    "z": "tab_dashboard_ui",
-    "name": "Construye texto de estado",
-    "func": "let cfg = global.get(\"sidbay_config\") || {};\nlet nodeId = cfg.system && cfg.system.node_id ? cfg.system.node_id : \"?\";\nlet tz = cfg.system && cfg.system.timezone ? cfg.system.timezone : \"?\";\n\nlet text = \"Nodo: \" + nodeId + \"\\n\";\ntext += \"Zona horaria: \" + tz + \"\\n\";\ntext += \"Logs en: \" + (cfg.system && cfg.system.sd_mount ? cfg.system.sd_mount : \"(no definido)\");\n\nmsg.payload = text;\nreturn msg;",
-    "outputs": 1,
-    "noerr": 0,
-    "initialize": "",
-    "finalize": "",
-    "libs": [],
-    "x": 380,
-    "y": 80,
-    "wires": [
-      [
-        "ui_text_status"
-      ]
-    ]
-  },
-  {
-    "id": "ui_text_status",
-    "type": "ui_text",
-    "z": "tab_dashboard_ui",
-    "group": "ui_group_status",
-    "order": 1,
-    "width": 12,
-    "height": 3,
-    "name": "Estado general",
-    "label": "Estado",
-    "format": "{{msg.payload}}",
-    "layout": "col-center",
-    "x": 630,
-    "y": 80,
-    "wires": []
-  },
-  {
-    "id": "inject_ui_events",
-    "type": "inject",
-    "z": "tab_dashboard_ui",
-    "name": "Refresca eventos",
-    "props": [
-      {
-        "p": "payload"
-      }
-    ],
-    "repeat": "3",
-    "crontab": "",
-    "once": true,
-    "onceDelay": 2,
-    "topic": "",
-    "payload": "",
-    "payloadType": "date",
-    "x": 150,
-    "y": 160,
-    "wires": [
-      [
-        "fn_ui_events"
-      ]
-    ]
-  },
-  {
-    "id": "fn_ui_events",
-    "type": "function",
-    "z": "tab_dashboard_ui",
-    "name": "Genera HTML tabla eventos",
-    "func": "let events = global.get(\"sidbay_recent_events\") || [];\n\nlet html = '<table style=\"width:100%; font-size:11px;\">';\nhtml += '<tr><th align=\"left\">Hora</th><th align=\"left\">Módulo</th><th align=\"left\">Sev</th><th align=\"left\">Texto</th></tr>';\nfor (let i = events.length - 1; i >= 0 && i >= events.length - 20; i--) {\n    const ev = events[i];\n    html += '<tr>';\n    html += '<td>' + (ev.ts || '') + '</td>';\n    html += '<td>' + (ev.module || '') + '</td>';\n    html += '<td>' + (ev.severity || '') + '</td>';\n    html += '<td>' + (ev.text || '') + '</td>';\n    html += '</tr>';\n}\nhtml += '</table>';\n\nmsg.payload = html;\nreturn msg;",
-    "outputs": 1,
-    "noerr": 0,
-    "initialize": "",
-    "finalize": "",
-    "libs": [],
-    "x": 390,
-    "y": 160,
-    "wires": [
-      [
-        "ui_template_events"
-      ]
-    ]
-  },
-  {
-    "id": "ui_template_events",
-    "type": "ui_template",
-    "z": "tab_dashboard_ui",
-    "group": "ui_group_events",
-    "name": "Tabla eventos recientes",
-    "order": 1,
-    "width": 12,
-    "height": 8,
-    "format": "<div ng-bind-html=\"msg.payload\"></div>",
-    "storeOutMessages": true,
-    "fwdInMessages": true,
-    "resendOnRefresh": true,
-    "templateScope": "local",
-    "x": 670,
-    "y": 160,
-    "wires": [
-      []
-    ]
-  },
-
-  {
-    "id": "serialin_ipms",
-    "type": "serial in",
-    "z": "tab_rs485_ipms",
-    "name": "RS485 IPMS (bus1)",
-    "serial": "serial_cm4_bus1",
-    "x": 150,
-    "y": 80,
-    "wires": [
-      [
-        "fn_ipms_stub"
-      ]
-    ]
-  },
-  {
-    "id": "fn_ipms_stub",
-    "type": "function",
-    "z": "tab_rs485_ipms",
-    "name": "Stub parser IPMS",
-    "func": "let payload = msg.payload;\n\nlet ev = {\n    id: \"IPMS_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"ipms\",\n    source: { iface: \"rs485-1\", direction: \"in\", addr: \"?\" },\n    type: \"frame\",\n    severity: \"info\",\n    code: \"IPMS_FRAME\",\n    text: \"Trama IPMS recibida (stub)\",\n    data: { raw: payload }\n};\n\nmsg.event = ev;\nreturn msg;",
-    "outputs": 1,
-    "noerr": 0,
-    "initialize": "",
-    "finalize": "",
-    "libs": [],
-    "x": 380,
-    "y": 80,
-    "wires": [
-      [
-        "linkout_ipms_to_logger"
-      ]
-    ]
-  },
-  {
-    "id": "linkout_ipms_to_logger",
-    "type": "link out",
-    "z": "tab_rs485_ipms",
-    "name": "to_logger",
-    "mode": "link",
-    "links": [
-      "linkin_logger_from_modules"
-    ],
-    "x": 640,
-    "y": 80,
-    "wires": []
-  },
-
-  {
-    "id": "serialin_osdp",
-    "type": "serial in",
-    "z": "tab_rs485_osdp",
-    "name": "RS485 OSDP (bus2)",
-    "serial": "serial_cm4_bus2",
-    "x": 150,
-    "y": 80,
-    "wires": [
-      [
-        "fn_osdp_stub"
-      ]
-    ]
-  },
-  {
-    "id": "fn_osdp_stub",
-    "type": "function",
-    "z": "tab_rs485_osdp",
-    "name": "Stub parser OSDP",
-    "func": "let payload = msg.payload;\n\nlet ev = {\n    id: \"OSDP_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"osdp\",\n    source: { iface: \"rs485-2\", direction: \"in\", addr: \"?\" },\n    type: \"frame\",\n    severity: \"info\",\n    code: \"OSDP_FRAME\",\n    text: \"Trama OSDP recibida (stub)\",\n    data: { raw: payload }\n};\n\nmsg.event = ev;\nreturn msg;",
-    "outputs": 1,
-    "noerr": 0,
-    "initialize": "",
-    "finalize": "",
-    "libs": [],
-    "x": 380,
-    "y": 80,
-    "wires": [
-      [
-        "linkout_osdp_to_logger"
-      ]
-    ]
-  },
-  {
-    "id": "linkout_osdp_to_logger",
-    "type": "link out",
-    "z": "tab_rs485_osdp",
-    "name": "to_logger",
-    "mode": "link",
-    "links": [
-      "linkin_logger_from_modules"
-    ],
-    "x": 640,
-    "y": 80,
-    "wires": []
-  },
-
-  {
-    "id": "linkin_hw_from_logger",
-    "type": "link in",
-    "z": "tab_hw_io",
-    "name": "from_logger_to_hw",
-    "links": [
-      "linkout_logger_to_hw"
-    ],
-    "x": 150,
-    "y": 80,
-    "wires": [
-      [
-        "fn_hw_user_leds"
-      ]
-    ]
-  },
-  {
-    "id": "fn_hw_user_leds",
-    "type": "function",
-    "z": "tab_hw_io",
-    "name": "Decide USER0 según severidad",
-    "func": "let ev = msg.event || {};\nlet sev = ev.severity || \"info\";\n\nlet on = (sev === \"error\" || sev === \"crit\");\nmsg.payload = on ? 1 : 0;\nreturn msg;",
-    "outputs": 1,
-    "noerr": 0,
-    "initialize": "",
-    "finalize": "",
-    "libs": [],
-    "x": 410,
-    "y": 80,
-    "wires": [
-      [
-        "gpio_user0"
-      ]
-    ]
-  },
-  {
-    "id": "gpio_user0",
-    "type": "rpi-gpio out",
-    "z": "tab_hw_io",
-    "name": "USER0 (GPIO20)",
-    "pin": "20",
-    "set": true,
-    "level": "0",
-    "freq": "",
-    "out": "out",
-    "x": 690,
-    "y": 80,
-    "wires": []
-  }
+    {
+        "id": "tab_core_system",
+        "type": "tab",
+        "label": "00_CORE_SYSTEM",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "tab_logger_history",
+        "type": "tab",
+        "label": "01_LOGGER_HISTORY",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "tab_dashboard_ui",
+        "type": "tab",
+        "label": "02_DASHBOARD_UI",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "tab_rs485_ipms",
+        "type": "tab",
+        "label": "10_RS485_IPMS",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "tab_rs485_osdp",
+        "type": "tab",
+        "label": "11_RS485_OSDP",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "tab_eth_capture",
+        "type": "tab",
+        "label": "20_ETH_CAPTURE",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "tab_relay_routing",
+        "type": "tab",
+        "label": "30_RELAY_ROUTING",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "tab_auth_yubikey",
+        "type": "tab",
+        "label": "40_AUTH_OMNIK​EY_YUBIKEY",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "tab_hw_io",
+        "type": "tab",
+        "label": "99_HARDWARE_IO",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "serial_cm4_bus1",
+        "type": "serial-port",
+        "serialport": "/dev/ttyAMA1",
+        "serialbaud": "9600",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "",
+        "bin": "bin",
+        "out": "time",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "serial_cm4_bus2",
+        "type": "serial-port",
+        "serialport": "/dev/ttyAMA2",
+        "serialbaud": "9600",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "",
+        "bin": "bin",
+        "out": "time",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "ui_tab_main",
+        "type": "ui_tab",
+        "name": "SiDBaY",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "ui_group_status",
+        "type": "ui_group",
+        "name": "Estado",
+        "tab": "ui_tab_main",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "ui_group_events",
+        "type": "ui_group",
+        "name": "Eventos",
+        "tab": "ui_tab_main",
+        "order": 2,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "ui_group_config",
+        "type": "ui_group",
+        "name": "Config general",
+        "tab": "ui_tab_main",
+        "order": 3,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "3119f787f313bed6",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#0094CE",
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#fafafa",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#1bbfff",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#0094ce",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD/MM/YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "ui_group_auth",
+        "type": "ui_group",
+        "name": "Auth YubiKey",
+        "tab": "ui_tab_main",
+        "order": 4,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "inject_core_start",
+        "type": "inject",
+        "z": "tab_core_system",
+        "name": "On start",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.5,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 80,
+        "wires": [
+            [
+                "fn_core_init"
+            ]
+        ]
+    },
+    {
+        "id": "fn_core_init",
+        "type": "function",
+        "z": "tab_core_system",
+        "name": "Init SiDBaY config",
+        "func": "let cfg = global.get(\"sidbay_config\");\n\nif (!cfg) {\n    cfg = {\n        system: {\n            node_id: \"SiDBaY-001\",\n            timezone: \"Europe/Madrid\",\n            sd_mount: \"/mnt/sidbay-logs\",\n            log_retention_days: 30,\n            max_log_size_mb: 20\n        },\n        hardware: {\n            rs485: {\n                bus1: { device: \"/dev/ttyAMA1\", role: \"ipms\" },\n                bus2: { device: \"/dev/ttyAMA2\", role: \"osdp\" }\n            },\n            leds: { user0: 20, user1: 26 },\n            buzzer_gpio: 22,\n            rtc_enabled: true,\n            crypto_enabled: true\n        },\n        logging: {\n            events_path: \"/mnt/sidbay-logs/events-YYYYMMDD.log\",\n            system_path: \"/mnt/sidbay-logs/system-YYYYMMDD.log\",\n            pcap_path: \"/mnt/sidbay-logs/pcap\",\n            level: \"info\"\n        },\n        modules: {\n            ipms: { enabled: true, rs485_bus: \"bus1\", mode: \"emulator\" },\n            osdp: { enabled: true, rs485_bus: \"bus2\" },\n            eth_capture: { enabled: true, iface: \"eth0\", filter: \"tcp port 8888 or udp port 49204\", pcap_record: false },\n            relay: { enabled: true },\n            auth_yubikey: { enabled: true, required_for_critical_actions: false }\n        }\n    };\n}\n\nglobal.set(\"sidbay_config\", cfg);\n\nmsg.event = {\n    id: \"SYSTEM_START_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"system\",\n    source: { iface: \"internal\", direction: \"internal\", addr: \"-\" },\n    type: \"status\",\n    severity: \"info\",\n    code: \"SYSTEM_START\",\n    text: \"SiDBaY iniciado y configuración cargada\",\n    data: { node_id: cfg.system.node_id }\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 80,
+        "wires": [
+            [
+                "linkout_core_to_logger"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_core_to_logger",
+        "type": "link out",
+        "z": "tab_core_system",
+        "name": "to_logger",
+        "mode": "link",
+        "links": [
+            "linkin_logger_from_modules"
+        ],
+        "x": 630,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "linkin_logger_from_modules",
+        "type": "link in",
+        "z": "tab_logger_history",
+        "name": "from_modules_to_logger",
+        "links": [
+            "linkout_core_to_logger",
+            "linkout_ipms_to_logger",
+            "linkout_osdp_to_logger",
+            "linkout_cfg_to_logger",
+            "26d86676456abf0d",
+            "linkout_auth_to_logger"
+        ],
+        "x": 160,
+        "y": 80,
+        "wires": [
+            [
+                "fn_logger_format"
+            ]
+        ]
+    },
+    {
+        "id": "fn_logger_format",
+        "type": "function",
+        "z": "tab_logger_history",
+        "name": "Normaliza y distribuye",
+        "func": "let ev = msg.event || {};\n\nif (!ev.ts) ev.ts = new Date().toISOString();\nif (!ev.id) ev.id = \"EV_\" + Date.now();\nif (!ev.module) ev.module = \"unknown\";\nif (!ev.severity) ev.severity = \"info\";\n\nmsg.event = ev;\n\nlet recent = global.get(\"sidbay_recent_events\") || [];\nrecent.push(ev);\nif (recent.length > 100) {\n    recent = recent.slice(recent.length - 100);\n}\nglobal.set(\"sidbay_recent_events\", recent);\n\nlet cfg = global.get(\"sidbay_config\") || {};\nlet logging = cfg.logging || {};\nlet basePath;\n\nif (ev.module === \"system\" || ev.type === \"config\") {\n    basePath = logging.system_path || \"/mnt/sidbay-logs/system-YYYYMMDD.log\";\n} else {\n    basePath = logging.events_path || \"/mnt/sidbay-logs/events-YYYYMMDD.log\";\n}\n\nlet d = new Date();\nlet y = d.getFullYear();\nlet m = (\"0\" + (d.getMonth()+1)).slice(-2);\nlet day = (\"0\" + d.getDate()).slice(-2);\nlet dateStr = \"\" + y + m + day;\n\nlet filename = basePath.replace(\"YYYYMMDD\", dateStr);\nmsg.filename = filename;\n\nmsg.payload = JSON.stringify(ev) + \"\\n\";\n\nlet msgFile = { payload: msg.payload, filename: msg.filename };\nlet msgHW = { event: ev };\n\nreturn [ msgFile, msgHW ];",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 430,
+        "y": 80,
+        "wires": [
+            [
+                "file_logger_out"
+            ],
+            [
+                "linkout_logger_to_hw"
+            ]
+        ]
+    },
+    {
+        "id": "file_logger_out",
+        "type": "file",
+        "z": "tab_logger_history",
+        "name": "Append log a SD",
+        "filename": "",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "utf8",
+        "x": 730,
+        "y": 60,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "linkout_logger_to_hw",
+        "type": "link out",
+        "z": "tab_logger_history",
+        "name": "to_hardware_status",
+        "mode": "link",
+        "links": [
+            "linkin_hw_from_logger"
+        ],
+        "x": 730,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "inject_ui_status",
+        "type": "inject",
+        "z": "tab_dashboard_ui",
+        "name": "Refresca estado",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "5",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 80,
+        "wires": [
+            [
+                "fn_ui_status"
+            ]
+        ]
+    },
+    {
+        "id": "fn_ui_status",
+        "type": "function",
+        "z": "tab_dashboard_ui",
+        "name": "Construye texto de estado",
+        "func": "let cfg = global.get(\"sidbay_config\") || {};\nlet nodeId = cfg.system && cfg.system.node_id ? cfg.system.node_id : \"?\";\nlet tz = cfg.system && cfg.system.timezone ? cfg.system.timezone : \"?\";\n\nlet text = \"Nodo: \" + nodeId + \"\\n\";\ntext += \"Zona horaria: \" + tz + \"\\n\";\ntext += \"Logs en: \" + (cfg.system && cfg.system.sd_mount ? cfg.system.sd_mount : \"(no definido)\");\n\nmsg.payload = text;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 80,
+        "wires": [
+            [
+                "ui_text_status"
+            ]
+        ]
+    },
+    {
+        "id": "inject_ui_events",
+        "type": "inject",
+        "z": "tab_dashboard_ui",
+        "name": "Refresca eventos",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "3",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 2,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 160,
+        "wires": [
+            [
+                "fn_ui_events"
+            ]
+        ]
+    },
+    {
+        "id": "fn_ui_events",
+        "type": "function",
+        "z": "tab_dashboard_ui",
+        "name": "Genera HTML tabla eventos",
+        "func": "let events = global.get(\"sidbay_recent_events\") || [];\n\nlet html = '<table style=\"width:100%; font-size:11px;\">';\nhtml += '<tr><th align=\"left\">Hora</th><th align=\"left\">Módulo</th><th align=\"left\">Sev</th><th align=\"left\">Texto</th></tr>';\nfor (let i = events.length - 1; i >= 0 && i >= events.length - 20; i--) {\n    const ev = events[i];\n    html += '<tr>';\n    html += '<td>' + (ev.ts || '') + '</td>';\n    html += '<td>' + (ev.module || '') + '</td>';\n    html += '<td>' + (ev.severity || '') + '</td>';\n    html += '<td>' + (ev.text || '') + '</td>';\n    html += '</tr>';\n}\nhtml += '</table>';\n\nmsg.payload = html;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 160,
+        "wires": [
+            [
+                "ui_template_events"
+            ]
+        ]
+    },
+    {
+        "id": "ui_text_status",
+        "type": "ui_text",
+        "z": "tab_dashboard_ui",
+        "group": "ui_group_status",
+        "order": 1,
+        "width": 12,
+        "height": 3,
+        "name": "Estado general",
+        "label": "Estado",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 630,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "ui_template_events",
+        "type": "ui_template",
+        "z": "tab_dashboard_ui",
+        "group": "ui_group_events",
+        "name": "Tabla eventos recientes",
+        "order": 1,
+        "width": 12,
+        "height": 8,
+        "format": "<div ng-bind-html=\"msg.payload\"></div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 670,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fn_cfg_update",
+        "type": "function",
+        "z": "tab_dashboard_ui",
+        "name": "Actualiza sidbay_config",
+        "func": "let cfg = global.get(\"sidbay_config\") || {};\nif (msg.topic) {\n  let parts = msg.topic.split(\".\");\n  let ref = cfg;\n  for (let i = 0; i < parts.length - 1; i++) {\n    let k = parts[i];\n    if (ref[k] === undefined) { ref[k] = {}; }\n    ref = ref[k];\n  }\n  let last = parts[parts.length - 1];\n  ref[last] = msg.payload;\n}\nglobal.set(\"sidbay_config\", cfg);\n\nmsg.event = {\n  id: \"CFG_\" + Date.now(),\n  ts: new Date().toISOString(),\n  module: \"system\",\n  source: { iface: \"dashboard\", direction: \"in\", addr: \"-\" },\n  type: \"config\",\n  severity: \"info\",\n  code: \"CONFIG_CHANGED\",\n  text: \"Cambio de configuración: \" + (msg.topic || \"\"),\n  data: { path: msg.topic, value: msg.payload }\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 360,
+        "wires": [
+            [
+                "linkout_cfg_to_logger"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_cfg_to_logger",
+        "type": "link out",
+        "z": "tab_dashboard_ui",
+        "name": "to_logger_from_cfg",
+        "mode": "link",
+        "links": [
+            "linkin_logger_from_modules"
+        ],
+        "x": 810,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "sw_ipms_enabled",
+        "type": "ui_switch",
+        "z": "tab_dashboard_ui",
+        "name": "IPMS habilitado",
+        "label": "IPMS",
+        "tooltip": "",
+        "group": "ui_group_config",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "modules.ipms.enabled",
+        "style": "",
+        "onvalue": true,
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": false,
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "animate": true,
+        "x": 220,
+        "y": 320,
+        "wires": [
+            [
+                "fn_cfg_update"
+            ]
+        ]
+    },
+    {
+        "id": "dd_ipms_mode",
+        "type": "ui_dropdown",
+        "z": "tab_dashboard_ui",
+        "name": "Modo IPMS",
+        "label": "Modo IPMS",
+        "tooltip": "",
+        "place": "Selecciona modo",
+        "group": "ui_group_config",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "options": [
+            {
+                "label": "Monitor",
+                "value": "monitor",
+                "type": "str"
+            },
+            {
+                "label": "Emulador",
+                "value": "emulator",
+                "type": "str"
+            },
+            {
+                "label": "Puente",
+                "value": "bridge",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "modules.ipms.mode",
+        "x": 240,
+        "y": 360,
+        "wires": [
+            [
+                "fn_cfg_update"
+            ]
+        ]
+    },
+    {
+        "id": "sw_osdp_enabled",
+        "type": "ui_switch",
+        "z": "tab_dashboard_ui",
+        "name": "OSDP habilitado",
+        "label": "OSDP",
+        "tooltip": "",
+        "group": "ui_group_config",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "modules.osdp.enabled",
+        "style": "",
+        "onvalue": true,
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": false,
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "animate": true,
+        "x": 220,
+        "y": 400,
+        "wires": [
+            [
+                "fn_cfg_update"
+            ]
+        ]
+    },
+    {
+        "id": "sw_ethcap_enabled",
+        "type": "ui_switch",
+        "z": "tab_dashboard_ui",
+        "name": "Captura ETH",
+        "label": "Captura ETH",
+        "tooltip": "",
+        "group": "ui_group_config",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "modules.eth_capture.enabled",
+        "style": "",
+        "onvalue": true,
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": false,
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "animate": true,
+        "x": 240,
+        "y": 440,
+        "wires": [
+            [
+                "fn_cfg_update"
+            ]
+        ]
+    },
+    {
+        "id": "sw_relay_enabled",
+        "type": "ui_switch",
+        "z": "tab_dashboard_ui",
+        "name": "Reenvío habilitado",
+        "label": "Reenvío",
+        "tooltip": "",
+        "group": "ui_group_config",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "modules.relay.enabled",
+        "style": "",
+        "onvalue": true,
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": false,
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "animate": true,
+        "x": 230,
+        "y": 480,
+        "wires": [
+            [
+                "fn_cfg_update"
+            ]
+        ]
+    },
+    {
+        "id": "sw_auth_enabled",
+        "type": "ui_switch",
+        "z": "tab_dashboard_ui",
+        "name": "Auth YubiKey",
+        "label": "Auth YubiKey",
+        "tooltip": "",
+        "group": "ui_group_config",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "modules.auth_yubikey.enabled",
+        "style": "",
+        "onvalue": true,
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": false,
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "animate": true,
+        "x": 250,
+        "y": 520,
+        "wires": [
+            [
+                "fn_cfg_update"
+            ]
+        ]
+    },
+    {
+        "id": "fn_ipms_stub",
+        "type": "function",
+        "z": "tab_rs485_ipms",
+        "name": "Stub parser IPMS",
+        "func": "let cfg = global.get(\"sidbay_config\") || {};\nlet modules = cfg.modules || {};\nlet ipmsCfg = modules.ipms || {};\n\n// Si el módulo IPMS está deshabilitado, no generamos eventos\nif (!ipmsCfg.enabled) {\n    return null;\n}\n\nlet payload = msg.payload; // buffer o string según config\n\nlet ev = {\n    id: \"IPMS_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"ipms\",\n    source: {\n        iface: ipmsCfg.rs485_bus || \"rs485-1\",\n        direction: \"in\",\n        addr: \"?\"\n    },\n    type: \"frame\",\n    severity: \"info\",\n    code: \"IPMS_FRAME\",\n    text: \"Trama IPMS recibida (stub)\",\n    data: {\n        mode: ipmsCfg.mode || \"emulator\",\n        raw: payload\n    }\n};\n\nmsg.event = ev;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 80,
+        "wires": [
+            [
+                "linkout_ipms_to_logger"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_ipms_to_logger",
+        "type": "link out",
+        "z": "tab_rs485_ipms",
+        "name": "to_logger",
+        "mode": "link",
+        "links": [
+            "linkin_logger_from_modules"
+        ],
+        "x": 640,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "serialin_ipms",
+        "type": "serial in",
+        "z": "tab_rs485_ipms",
+        "name": "RS485 IPMS (bus1)",
+        "serial": "serial_cm4_bus1",
+        "x": 150,
+        "y": 80,
+        "wires": [
+            [
+                "fn_ipms_stub"
+            ]
+        ]
+    },
+    {
+        "id": "fn_osdp_stub",
+        "type": "function",
+        "z": "tab_rs485_osdp",
+        "name": "Stub parser OSDP",
+        "func": "let cfg = global.get(\"sidbay_config\") || {};\nlet modules = cfg.modules || {};\nlet osdpCfg = modules.osdp || {};\n\nif (!osdpCfg.enabled) {\n    return null;\n}\n\nlet payload = msg.payload;\n\nlet ev = {\n    id: \"OSDP_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"osdp\",\n    source: {\n        iface: osdpCfg.rs485_bus || \"rs485-2\",\n        direction: \"in\",\n        addr: \"?\"\n    },\n    type: \"frame\",\n    severity: \"info\",\n    code: \"OSDP_FRAME\",\n    text: \"Trama OSDP recibida (stub)\",\n    data: {\n        raw: payload\n    }\n};\n\nmsg.event = ev;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 80,
+        "wires": [
+            [
+                "linkout_osdp_to_logger"
+            ]
+        ]
+    },
+    {
+        "id": "linkout_osdp_to_logger",
+        "type": "link out",
+        "z": "tab_rs485_osdp",
+        "name": "to_logger",
+        "mode": "link",
+        "links": [
+            "linkin_logger_from_modules"
+        ],
+        "x": 640,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "serialin_osdp",
+        "type": "serial in",
+        "z": "tab_rs485_osdp",
+        "name": "RS485 OSDP (bus2)",
+        "serial": "serial_cm4_bus2",
+        "x": 150,
+        "y": 80,
+        "wires": [
+            [
+                "fn_osdp_stub"
+            ]
+        ]
+    },
+    {
+        "id": "ui_text_input_pin",
+        "type": "ui_text_input",
+        "z": "tab_auth_yubikey",
+        "name": "PIN",
+        "label": "PIN tarjeta",
+        "tooltip": "",
+        "group": "ui_group_auth",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "password",
+        "delay": 300,
+        "topic": "",
+        "x": 280,
+        "y": 210,
+        "wires": [
+            [
+                "fn_store_pin"
+            ]
+        ]
+    },
+    {
+        "id": "fn_store_pin",
+        "type": "function",
+        "z": "tab_auth_yubikey",
+        "name": "Guarda PIN en contexto",
+        "func": "// fn_store_pin\nflow.set(\"auth_pin\", msg.payload || \"\");\nreturn null;    // no sigue la cadena\n",
+        "outputs": 0,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 210,
+        "wires": []
+    },
+    {
+        "id": "ui_button_auth",
+        "type": "ui_button",
+        "z": "tab_auth_yubikey",
+        "name": "Iniciar autenticación",
+        "group": "ui_group_auth",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Iniciar autenticación (stub)",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "",
+        "x": 320,
+        "y": 270,
+        "wires": [
+            [
+                "fn_auth_stub"
+            ]
+        ]
+    },
+    {
+        "id": "fn_auth_stub",
+        "type": "function",
+        "z": "tab_auth_yubikey",
+        "name": "fn_auth_yubikey_call",
+        "func": "// fn_auth_yubikey_call\nlet cfg = global.get(\"sidbay_config\") || {};\nlet modules = cfg.modules || {};\nlet mod = modules.auth_yubikey || { enabled: true };\n\nif (!mod.enabled) {\n    node.status({ fill: \"red\", shape: \"ring\", text: \"módulo deshabilitado\" });\n    return null;\n}\n\nlet pin = flow.get(\"auth_pin\") || \"\";\nif (!pin) {\n    node.status({ fill: \"red\", shape: \"dot\", text: \"PIN vacío\" });\n    msg.payload = \"Introduce el PIN de la YubiKey\";\n    return msg; // a un texto de aviso si quieres\n}\n\n// Preparamos msg para el nodo exec\nmsg.payload = pin;       // el exec lo añadirá como argumento\nnode.status({ fill: \"blue\", shape: \"dot\", text: \"autenticando...\" });\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 280,
+        "wires": [
+            [
+                "4cba96a899b7eac4"
+            ]
+        ]
+    },
+    {
+        "id": "ui_text_auth_result",
+        "type": "ui_text",
+        "z": "tab_auth_yubikey",
+        "group": "ui_group_auth",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "name": "Resultado auth",
+        "label": "Resultado",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "x": 1260,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "linkout_auth_to_logger",
+        "type": "link out",
+        "z": "tab_auth_yubikey",
+        "name": "to_logger_auth",
+        "mode": "link",
+        "links": [
+            "linkin_logger_from_modules"
+        ],
+        "x": 1275,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "4cba96a899b7eac4",
+        "type": "exec",
+        "z": "tab_auth_yubikey",
+        "command": "\"C:\\Users\\yferr\\Documents\\SiDBaY\\src\\rpi\\sidbay_auth_yubikey.py\"",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "exec auth yubikey",
+        "x": 810,
+        "y": 280,
+        "wires": [
+            [
+                "b4c4b3d2db854d77"
+            ],
+            [
+                "c33089b7010ce173"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "b4c4b3d2db854d77",
+        "type": "function",
+        "z": "tab_auth_yubikey",
+        "name": "fn_auth_yubikey_result",
+        "func": "// fn_auth_yubikey_result\nlet txt;\nlet ev;\n\ntry {\n    let data = JSON.parse(msg.payload);\n\n    txt = data.message || (data.ok ? \"Autenticación OK\" : \"Autenticación fallida\");\n\n    ev = {\n        id: \"AUTH_\" + Date.now(),\n        ts: data.ts || new Date().toISOString(),\n        module: \"auth_yubikey\",\n        source: {\n            iface: \"usb-omnikey\",\n            direction: \"in\",\n            addr: \"-\"\n        },\n        type: \"auth\",\n        severity: data.ok ? \"info\" : \"error\",\n        code: data.ok ? \"AUTH_OK\" : \"AUTH_FAIL\",\n        text: txt,\n        data: {\n            pin_ok: data.pin_ok,\n            slot: data.slot,\n            hash_alg: data.hash_alg,\n            sign_alg: data.sign_alg,\n            challenge_hex: data.challenge_hex,\n            signature_hex: data.signature_hex,\n            combined_hash_hex: data.combined_hash_hex,\n            cert_subject: data.cert_subject,\n            cert_issuer: data.cert_issuer,\n            cert_serial: data.cert_serial,\n            cert_not_before: data.cert_not_before,\n            cert_not_after: data.cert_not_after\n        }\n    };\n\n} catch (e) {\n    txt = \"Error parseando JSON de auth YubiKey\";\n    ev = {\n        id: \"AUTH_\" + Date.now(),\n        ts: new Date().toISOString(),\n        module: \"auth_yubikey\",\n        type: \"auth\",\n        severity: \"error\",\n        code: \"AUTH_PARSE_ERROR\",\n        text: txt,\n        data: { raw: (msg.payload || \"\").toString().slice(0, 500) }\n    };\n}\n\nnode.status({});   // limpia el status\n\n// Salida 1 → texto en dashboard; salida 2 → logger global\nlet uiMsg = { payload: txt };\nlet logMsg = { payload: txt, event: ev };\n\nreturn [uiMsg, logMsg];\n",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1070,
+        "y": 240,
+        "wires": [
+            [
+                "ui_text_auth_result"
+            ],
+            [
+                "linkout_auth_to_logger"
+            ]
+        ]
+    },
+    {
+        "id": "c33089b7010ce173",
+        "type": "debug",
+        "z": "tab_auth_yubikey",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1020,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "linkin_hw_from_logger",
+        "type": "link in",
+        "z": "tab_hw_io",
+        "name": "from_logger_to_hw",
+        "links": [
+            "linkout_logger_to_hw"
+        ],
+        "x": 435,
+        "y": 560,
+        "wires": [
+            [
+                "fn_hw_user_leds",
+                "fn_hw_buzzer_stub"
+            ]
+        ]
+    },
+    {
+        "id": "fn_hw_user_leds",
+        "type": "function",
+        "z": "tab_hw_io",
+        "name": "Decide USER0 según severidad",
+        "func": "let ev = msg.event || {};\nlet sev = ev.severity || \"info\";\n\nlet on = (sev === \"error\" || sev === \"crit\");\nmsg.payload = on ? 1 : 0;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 690,
+        "y": 540,
+        "wires": [
+            [
+                "gpio_user0",
+                "gpio_user1"
+            ]
+        ]
+    },
+    {
+        "id": "gpio_user0",
+        "type": "rpi-gpio out",
+        "z": "tab_hw_io",
+        "name": "USER0 (GPIO20)",
+        "pin": "8",
+        "set": true,
+        "level": "0",
+        "freq": "",
+        "out": "out",
+        "bcm": true,
+        "x": 1090,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "gpio_user1",
+        "type": "rpi-gpio out",
+        "z": "tab_hw_io",
+        "name": "USER1 (GPIO26)",
+        "pin": "7",
+        "set": true,
+        "level": "0",
+        "freq": "",
+        "out": "out",
+        "bcm": true,
+        "x": 1110,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "gpio_buzzer",
+        "type": "rpi-gpio out",
+        "z": "tab_hw_io",
+        "name": "Buzzer (GPIO22)",
+        "pin": "25",
+        "set": false,
+        "level": "0",
+        "freq": "",
+        "out": "out",
+        "bcm": true,
+        "x": 1050,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "fn_hw_buzzer_stub",
+        "type": "function",
+        "z": "tab_hw_io",
+        "d": true,
+        "name": "Buzzer en errores críticos",
+        "func": "let ev = msg.event || {};\\nlet sev = ev.severity || \"info\";\\nif (sev === \"crit\") {\\n  msg.payload = 1; // encender un instante\\n  return msg;\\n}\\nreturn null;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 780,
+        "y": 400,
+        "wires": [
+            [
+                "gpio_buzzer"
+            ]
+        ]
+    },
+    {
+        "id": "29913274b294912d",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-node-serialport": "2.0.3",
+            "node-red-dashboard": "3.6.6",
+            "node-red-node-pi-gpio": "2.0.6"
+        }
+    }
 ]

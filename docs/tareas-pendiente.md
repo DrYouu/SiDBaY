@@ -79,3 +79,16 @@ Lista de tareas a abordar en el Emulador IPMS como equipo de diagnóstico.
   - Esquemas de la placa base.
   - Protocolos exactos.
 - [ ] Añadir diagramas en `docs/arquitectura.md` y `docs/flujo-pruebas.md`.
+
+## Sesión 2025-11-22 – Resumen de trabajo
+
+- Aclarado el alcance del proyecto: el Emulador IPMS es una herramienta de diagnóstico para barcos, no un producto permanente ni parte fija del sistema IPMS.
+- Definida la estructura lógica del repositorio (src, tests, docs, etc.) y la organización de la documentación.
+- Redactados los documentos base:
+  - Arquitectura general del equipo de diagnóstico.
+  - Flujos de uso (captura, emulación, pruebas con YubiKey).
+  - Decisiones técnicas iniciales.
+  - Descripción del hardware y topologías de conexión.
+  - Plan general de logs y dashboard en Node-RED.
+  - Backlog técnico con tareas pendientes.
+- Diseñada una configuración de Codex para mantener el código, la documentación y el control de versiones ordenados y consistentes (AGENTS global, AGENTS por repo, config.toml).
