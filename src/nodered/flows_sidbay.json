@@ -1,0 +1,559 @@
+[
+  {
+    "id": "tab_core_system",
+    "type": "tab",
+    "label": "00_CORE_SYSTEM",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "tab_logger_history",
+    "type": "tab",
+    "label": "01_LOGGER_HISTORY",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "tab_dashboard_ui",
+    "type": "tab",
+    "label": "02_DASHBOARD_UI",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "tab_rs485_ipms",
+    "type": "tab",
+    "label": "10_RS485_IPMS",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "tab_rs485_osdp",
+    "type": "tab",
+    "label": "11_RS485_OSDP",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "tab_eth_capture",
+    "type": "tab",
+    "label": "20_ETH_CAPTURE",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "tab_relay_routing",
+    "type": "tab",
+    "label": "30_RELAY_ROUTING",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "tab_auth_yubikey",
+    "type": "tab",
+    "label": "40_AUTH_OMNIKEY_YUBIKEY",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "tab_hw_io",
+    "type": "tab",
+    "label": "99_HARDWARE_IO",
+    "disabled": false,
+    "info": ""
+  },
+
+  /* ---------- CONFIG NODES (DASHBOARD, SERIAL, ETC.) ---------- */
+
+  {
+    "id": "ui_tab_main",
+    "type": "ui_tab",
+    "z": "",
+    "name": "SiDBaY",
+    "icon": "dashboard",
+    "order": 1,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "ui_group_status",
+    "type": "ui_group",
+    "z": "",
+    "name": "Estado",
+    "tab": "ui_tab_main",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "ui_group_events",
+    "type": "ui_group",
+    "z": "",
+    "name": "Eventos",
+    "tab": "ui_tab_main",
+    "order": 2,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "ui_group_config",
+    "type": "ui_group",
+    "z": "",
+    "name": "Config general",
+    "tab": "ui_tab_main",
+    "order": 3,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+
+  {
+    "id": "serial_cm4_bus1",
+    "type": "serial-port",
+    "z": "",
+    "serialport": "/dev/ttyAMA1",
+    "serialbaud": "9600",
+    "databits": "8",
+    "parity": "none",
+    "stopbits": "1",
+    "waitfor": "",
+    "dtr": "none",
+    "rts": "none",
+    "cts": "none",
+    "dsr": "none",
+    "newline": "",
+    "bin": "bin",
+    "out": "time",
+    "addchar": "",
+    "responsetimeout": "10000"
+  },
+  {
+    "id": "serial_cm4_bus2",
+    "type": "serial-port",
+    "z": "",
+    "serialport": "/dev/ttyAMA2",
+    "serialbaud": "9600",
+    "databits": "8",
+    "parity": "none",
+    "stopbits": "1",
+    "waitfor": "",
+    "dtr": "none",
+    "rts": "none",
+    "cts": "none",
+    "dsr": "none",
+    "newline": "",
+    "bin": "bin",
+    "out": "time",
+    "addchar": "",
+    "responsetimeout": "10000"
+  },
+
+  /* ---------- 00_CORE_SYSTEM ---------- */
+
+  {
+    "id": "inject_core_start",
+    "type": "inject",
+    "z": "tab_core_system",
+    "name": "On start",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 0.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 140,
+    "y": 80,
+    "wires": [
+      [
+        "fn_core_init"
+      ]
+    ]
+  },
+  {
+    "id": "fn_core_init",
+    "type": "function",
+    "z": "tab_core_system",
+    "name": "Init SiDBaY config",
+    "func": "let cfg = global.get(\"sidbay_config\");\n\nif (!cfg) {\n    cfg = {\n        system: {\n            node_id: \"SiDBaY-001\",\n            timezone: \"Europe/Madrid\",\n            sd_mount: \"/mnt/sidbay-logs\",\n            log_retention_days: 30,\n            max_log_size_mb: 20\n        },\n        logging: {\n            events_path: \"/mnt/sidbay-logs/events-YYYYMMDD.log\",\n            system_path: \"/mnt/sidbay-logs/system-YYYYMMDD.log\",\n            pcap_path: \"/mnt/sidbay-logs/pcap\",\n            level: \"info\"\n        },\n        modules: {\n            ipms: { enabled: true, rs485_bus: \"bus1\", mode: \"emulator\" },\n            osdp: { enabled: true, rs485_bus: \"bus2\" },\n            eth_capture: { enabled: true, iface: \"eth0\", filter: \"\" },\n            relay: { enabled: true },\n            auth_yubikey: { enabled: true, required_for_critical_actions: false }\n        }\n    };\n}\n\nglobal.set(\"sidbay_config\", cfg);\n\nmsg.event = {\n    id: \"SYSTEM_START_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"system\",\n    source: { iface: \"internal\", direction: \"internal\", addr: \"-\" },\n    type: \"status\",\n    severity: \"info\",\n    code: \"SYSTEM_START\",\n    text: \"SiDBaY iniciado y configuración cargada\",\n    data: { node_id: cfg.system.node_id }\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 360,
+    "y": 80,
+    "wires": [
+      [
+        "linkout_core_to_logger"
+      ]
+    ]
+  },
+  {
+    "id": "linkout_core_to_logger",
+    "type": "link out",
+    "z": "tab_core_system",
+    "name": "to_logger",
+    "mode": "link",
+    "links": [
+      "linkin_logger_from_modules"
+    ],
+    "x": 630,
+    "y": 80,
+    "wires": []
+  },
+
+  /* ---------- 01_LOGGER_HISTORY ---------- */
+
+  {
+    "id": "linkin_logger_from_modules",
+    "type": "link in",
+    "z": "tab_logger_history",
+    "name": "from_modules_to_logger",
+    "links": [],
+    "x": 160,
+    "y": 80,
+    "wires": [
+      [
+        "fn_logger_format"
+      ]
+    ]
+  },
+  {
+    "id": "fn_logger_format",
+    "type": "function",
+    "z": "tab_logger_history",
+    "name": "Normaliza y guarda en contexto",
+    "func": "let ev = msg.event || {};\n\n// Normalizar campos mínimos\nif (!ev.ts) ev.ts = new Date().toISOString();\nif (!ev.id) ev.id = \"EV_\" + Date.now();\nif (!ev.module) ev.module = \"unknown\";\nif (!ev.severity) ev.severity = \"info\";\n\nmsg.event = ev;\n\n// Guardar en lista de eventos recientes en global\nlet recent = global.get(\"sidbay_recent_events\") || [];\nrecent.push(ev);\nif (recent.length > 100) {\n    recent = recent.slice(recent.length - 100);\n}\nglobal.set(\"sidbay_recent_events\", recent);\n\n// Decidir fichero según tipo\nlet cfg = global.get(\"sidbay_config\") || {};\nlet logging = cfg.logging || {};\nlet basePath;\n\nif (ev.module === \"system\" || ev.type === \"config\") {\n    basePath = logging.system_path || \"/mnt/sidbay-logs/system-YYYYMMDD.log\";\n} else {\n    basePath = logging.events_path || \"/mnt/sidbay-logs/events-YYYYMMDD.log\";\n}\n\n// Reemplazar YYYYMMDD por fecha actual\nlet d = new Date();\nlet y = d.getFullYear();\nlet m = (\"0\" + (d.getMonth()+1)).slice(-2);\nlet day = (\"0\" + d.getDate()).slice(-2);\nlet dateStr = \"\" + y + m + day;\n\nlet filename = basePath.replace(\"YYYYMMDD\", dateStr);\nmsg.filename = filename;\n\n// Línea JSON\nmsg.payload = JSON.stringify(ev) + \"\\n\";\n\n// Salida 1: a fichero\n// Salida 2: a hardware (para LEDs/buzzer) con el evento tal cual\nlet msgFile = { payload: msg.payload, filename: msg.filename };\nlet msgHW = { event: ev };\n\nreturn [ msgFile, msgHW ];",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 430,
+    "y": 80,
+    "wires": [
+      [
+        "file_logger_out"
+      ],
+      [
+        "linkout_logger_to_hw"
+      ]
+    ]
+  },
+  {
+    "id": "file_logger_out",
+    "type": "file",
+    "z": "tab_logger_history",
+    "name": "Append log a SD",
+    "filename": "",
+    "appendNewline": false,
+    "createDir": true,
+    "overwriteFile": "false",
+    "encoding": "utf8",
+    "x": 730,
+    "y": 60,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "linkout_logger_to_hw",
+    "type": "link out",
+    "z": "tab_logger_history",
+    "name": "to_hardware_status",
+    "mode": "link",
+    "links": [
+      "linkin_hw_from_logger"
+    ],
+    "x": 730,
+    "y": 120,
+    "wires": []
+  },
+
+  /* ---------- 02_DASHBOARD_UI ---------- */
+
+  {
+    "id": "inject_ui_status",
+    "type": "inject",
+    "z": "tab_dashboard_ui",
+    "name": "Refresca estado",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "5",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 80,
+    "wires": [
+      [
+        "fn_ui_status"
+      ]
+    ]
+  },
+  {
+    "id": "fn_ui_status",
+    "type": "function",
+    "z": "tab_dashboard_ui",
+    "name": "Construye texto de estado",
+    "func": "let cfg = global.get(\"sidbay_config\") || {};\nlet nodeId = cfg.system && cfg.system.node_id ? cfg.system.node_id : \"?\";\nlet tz = cfg.system && cfg.system.timezone ? cfg.system.timezone : \"?\";\n\nlet text = \"Nodo: \" + nodeId + \"\\n\";\ntext += \"Zona horaria: \" + tz + \"\\n\";\ntext += \"Logs en: \" + (cfg.system && cfg.system.sd_mount ? cfg.system.sd_mount : \"(no definido)\");\n\nmsg.payload = text;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 380,
+    "y": 80,
+    "wires": [
+      [
+        "ui_text_status"
+      ]
+    ]
+  },
+  {
+    "id": "ui_text_status",
+    "type": "ui_text",
+    "z": "tab_dashboard_ui",
+    "group": "ui_group_status",
+    "order": 1,
+    "width": 12,
+    "height": 3,
+    "name": "Estado general",
+    "label": "Estado",
+    "format": "{{msg.payload}}",
+    "layout": "col-center",
+    "x": 630,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "inject_ui_events",
+    "type": "inject",
+    "z": "tab_dashboard_ui",
+    "name": "Refresca eventos",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "3",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 2,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 150,
+    "y": 160,
+    "wires": [
+      [
+        "fn_ui_events"
+      ]
+    ]
+  },
+  {
+    "id": "fn_ui_events",
+    "type": "function",
+    "z": "tab_dashboard_ui",
+    "name": "Genera HTML tabla eventos",
+    "func": "let events = global.get(\"sidbay_recent_events\") || [];\n\nlet html = '<table style=\"width:100%; font-size:11px;\">';\nhtml += '<tr><th align=\"left\">Hora</th><th align=\"left\">Módulo</th><th align=\"left\">Sev</th><th align=\"left\">Texto</th></tr>';\nfor (let i = events.length - 1; i >= 0 && i >= events.length - 20; i--) {\n    const ev = events[i];\n    html += '<tr>';\n    html += '<td>' + (ev.ts || '') + '</td>';\n    html += '<td>' + (ev.module || '') + '</td>';\n    html += '<td>' + (ev.severity || '') + '</td>';\n    html += '<td>' + (ev.text || '') + '</td>';\n    html += '</tr>';\n}\nhtml += '</table>';\n\nmsg.payload = html;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 390,
+    "y": 160,
+    "wires": [
+      [
+        "ui_template_events"
+      ]
+    ]
+  },
+  {
+    "id": "ui_template_events",
+    "type": "ui_template",
+    "z": "tab_dashboard_ui",
+    "group": "ui_group_events",
+    "name": "Tabla eventos recientes",
+    "order": 1,
+    "width": 12,
+    "height": 8,
+    "format": "<div ng-bind-html=\"msg.payload | trusted\"></div>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "x": 670,
+    "y": 160,
+    "wires": [
+      []
+    ]
+  },
+
+  /* ---------- 10_RS485_IPMS (ESQUELETO) ---------- */
+
+  {
+    "id": "serialin_ipms",
+    "type": "serial in",
+    "z": "tab_rs485_ipms",
+    "name": "RS485 IPMS (bus1)",
+    "serial": "serial_cm4_bus1",
+    "x": 150,
+    "y": 80,
+    "wires": [
+      [
+        "fn_ipms_stub"
+      ]
+    ]
+  },
+  {
+    "id": "fn_ipms_stub",
+    "type": "function",
+    "z": "tab_rs485_ipms",
+    "name": "Stub parser IPMS",
+    "func": "let payload = msg.payload; // buffer o string según config\n\nlet ev = {\n    id: \"IPMS_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"ipms\",\n    source: { iface: \"rs485-1\", direction: \"in\", addr: \"?\" },\n    type: \"frame\",\n    severity: \"info\",\n    code: \"IPMS_FRAME\",\n    text: \"Trama IPMS recibida (stub)\",\n    data: { raw: payload }\n};\n\nmsg.event = ev;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 380,
+    "y": 80,
+    "wires": [
+      [
+        "linkout_ipms_to_logger"
+      ]
+    ]
+  },
+  {
+    "id": "linkout_ipms_to_logger",
+    "type": "link out",
+    "z": "tab_rs485_ipms",
+    "name": "to_logger",
+    "mode": "link",
+    "links": [
+      "linkin_logger_from_modules"
+    ],
+    "x": 640,
+    "y": 80,
+    "wires": []
+  },
+
+  /* ---------- 11_RS485_OSDP (ESQUELETO) ---------- */
+
+  {
+    "id": "serialin_osdp",
+    "type": "serial in",
+    "z": "tab_rs485_osdp",
+    "name": "RS485 OSDP (bus2)",
+    "serial": "serial_cm4_bus2",
+    "x": 150,
+    "y": 80,
+    "wires": [
+      [
+        "fn_osdp_stub"
+      ]
+    ]
+  },
+  {
+    "id": "fn_osdp_stub",
+    "type": "function",
+    "z": "tab_rs485_osdp",
+    "name": "Stub parser OSDP",
+    "func": "let payload = msg.payload;\n\nlet ev = {\n    id: \"OSDP_\" + Date.now(),\n    ts: new Date().toISOString(),\n    module: \"osdp\",\n    source: { iface: \"rs485-2\", direction: \"in\", addr: \"?\" },\n    type: \"frame\",\n    severity: \"info\",\n    code: \"OSDP_FRAME\",\n    text: \"Trama OSDP recibida (stub)\",\n    data: { raw: payload }\n};\n\nmsg.event = ev;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 380,
+    "y": 80,
+    "wires": [
+      [
+        "linkout_osdp_to_logger"
+      ]
+    ]
+  },
+  {
+    "id": "linkout_osdp_to_logger",
+    "type": "link out",
+    "z": "tab_rs485_osdp",
+    "name": "to_logger",
+    "mode": "link",
+    "links": [
+      "linkin_logger_from_modules"
+    ],
+    "x": 640,
+    "y": 80,
+    "wires": []
+  },
+
+  /* ---------- 99_HARDWARE_IO (LEDs / BUZZER ESQUELETO) ---------- */
+
+  {
+    "id": "linkin_hw_from_logger",
+    "type": "link in",
+    "z": "tab_hw_io",
+    "name": "from_logger_to_hw",
+    "links": [],
+    "x": 150,
+    "y": 80,
+    "wires": [
+      [
+        "fn_hw_user_leds"
+      ]
+    ]
+  },
+  {
+    "id": "fn_hw_user_leds",
+    "type": "function",
+    "z": "tab_hw_io",
+    "name": "Decide USER0 según severidad",
+    "func": "let ev = msg.event || {};\nlet sev = ev.severity || \"info\";\n\n// Por ahora: encender USER0 si hay error o crítico en el último evento\nlet on = (sev === \"error\" || sev === \"crit\");\nmsg.payload = on ? 1 : 0;\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 410,
+    "y": 80,
+    "wires": [
+      [
+        "gpio_user0"
+      ]
+    ]
+  },
+  {
+    "id": "gpio_user0",
+    "type": "rpi-gpio out",
+    "z": "tab_hw_io",
+    "name": "USER0 (GPIO20)",
+    "pin": "20",
+    "set": true,
+    "level": "0",
+    "freq": "",
+    "out": "out",
+    "x": 690,
+    "y": 80,
+    "wires": []
+  }
+]
