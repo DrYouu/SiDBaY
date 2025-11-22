@@ -1,0 +1,14 @@
+﻿# Archivos locales
+.env
+*.log
+
+# Dependencias y builds
+node_modules/
+vendor/
+dist/
+build/
+coverage/
+
+# Sistema
+.DS_Store
+Thumbs.db
